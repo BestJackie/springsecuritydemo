@@ -4,6 +4,7 @@ import com.example.springsecurity.demo.filter.ImageValidateCodeFilter;
 import com.example.springsecurity.demo.filter.SmsValidateCodeFilter;
 import com.example.springsecurity.demo.handler.MyAuthenticationFailureHandler;
 import com.example.springsecurity.demo.handler.MyAuthenticationSuccessHandler;
+import com.example.springsecurity.demo.service.MyExpiredSessionStrategy;
 import com.example.springsecurity.demo.service.MyUserDetailsService;
 import com.example.springsecurity.thirtypart.QQ.config.MySpringSocialConfigurer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +59,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http.csrf().disable()
                 .apply(mySpringSocialConfigurer).and()
                 .authorizeRequests()
-                .antMatchers("/login","/code/image","/code/sms","/signup","/user/regist")
+                .antMatchers("/login","/code/image","/code/sms","/signup","/user/regist","/session/invalid")
                 .permitAll()
                 .anyRequest()
                 .authenticated()
@@ -78,8 +79,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .tokenRepository(persistentTokenRepository())
                 .tokenValiditySeconds(60*60*60*30)
                 .and()
+                .sessionManagement()
+                .invalidSessionUrl("/session/invalid")
+                .maximumSessions(1)
+                .expiredSessionStrategy(new MyExpiredSessionStrategy())
+                .and().and()
                 .logout()
                 .permitAll();
+
     }
 
     @Override
