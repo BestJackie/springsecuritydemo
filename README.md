@@ -97,14 +97,14 @@
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 			chain.doFilter(req, res);
 		}
-}
+	}
 
 	protected Authentication createAuthentication(HttpServletRequest request) {
 		AnonymousAuthenticationToken auth = new AnonymousAuthenticationToken("12676a06-df4a-475b-bb7c-4d3ec4bd1c9b",
 				"anonymousUser", Arrays.asList("ROLE_ANONYMOUS"));
 		auth.setDetails(authenticationDetailsSource.buildDetails(request));
 		return auth;
-}
+	}
 FilterSecurityInterceptor是Spring Security过滤器链中的最后一个过滤器，负责来决定请求是否最终有权限来访问。在该过滤器方法调用中链中AbstractAccessDecisionManager#decide和WebExpressionVoter#vote是需要注意的两个方法，WebExpressionVoter是一种投票器，可以对访问的url进行投票，可以投"通过"，也可以投"拒绝"。 SecurityExpressionRoot#isAuthenticated()方法会返回最终的投票的结果。Spring Security默认所有的请求都需要登录认证，因我们访问"/helloworld"接口没有登录，所以投票器会投"拒绝"票(AccessDecisionVoter.ACCESS_DENIED)
 
 	public class AffirmativeBased extends AbstractAccessDecisionManager {
@@ -139,7 +139,7 @@ FilterSecurityInterceptor是Spring Security过滤器链中的最后一个过滤�
 
 		checkAllowIfAllAbstainDecisions();
 	}
-}
+	}
 ExceptionTranslationFilter是倒数第二个过滤器，它会捕获FilterSecurityInterceptor抛出的异常并对异常进行逻辑处理。如果访问拒绝(认证失败)就会重定向到登录地址"/login"
 
 	public class ExceptionTranslationFilter extends GenericFilterBean {
@@ -197,7 +197,7 @@ ExceptionTranslationFilter是倒数第二个过滤器，它会捕获FilterSecuri
 
 		chain.doFilter(request, response);
 	}
-}	
+	}	
 
 *过程二源码分析*
 ---------------------
@@ -264,7 +264,7 @@ ExceptionTranslationFilter是倒数第二个过滤器，它会捕获FilterSecuri
 				user.isAccountNonExpired(), user.isCredentialsNonExpired(),
 				user.isAccountNonLocked(), user.getAuthorities());
 	}
-}		
+	}		
 **四：Spring Security 默认的配置**
 ================================
 
