@@ -8,17 +8,18 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-security</artifactId>
 </dependency>
+
 *2、简单的测试controller*
 --------------------
 
 	@RestController
-public class ExampleController {
+	public class ExampleController {
 
-    @GetMapping("helloworld")
-    public List<String> helloworld() {
-        return Arrays.asList("Spring Security simple demo");
-    }
-}
+    	@GetMapping("helloworld")
+    	public List<String> helloworld() {
+       	 return Arrays.asList("Spring Security simple demo");
+   	 }
+	}
 *3. 开始验证*
 ------------------
 
