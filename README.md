@@ -4,10 +4,10 @@
 *1、引入spring-boot-starter-security依赖*
 ------------------
 
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
+	<dependency>
+    	<groupId>org.springframework.boot</groupId>
+    	<artifactId>spring-boot-starter-security</artifactId>
+	</dependency>
 
 *2、简单的测试controller*
 --------------------
@@ -51,15 +51,15 @@
 										| ReflectivePropertyAccessor.OptimalPropertyAccessor#read
 											| SecurityExpressionRoot#isAuthenticated() 投票的最终结果(拒绝)
 			 	| 如果投票结果是拒绝则抛出访问拒绝异常new AccessDeniedException("Access is denied")
-| ExceptionTranslationFilter#doFilter 异常转换过滤器：用于捕获过滤器抛出的异常，并作出适当的处理
-	| catch(Exception ex)
+	| ExceptionTranslationFilter#doFilter 异常转换过滤器：用于捕获过滤器抛出的异常，并作出适当的处理
+		| catch(Exception ex)
 		| handleSpringSecurityException(request, response, chain, ase)
 			| sendStartAuthentication()	
 				| DelegatingAuthenticationEntryPoint#commence
 					| LoginUrlAuthenticationEntryPoint#commence
 						| DefaultRedirectStrategy#sendRedirect(request, response, redirectUrl); 重定向登录路径redirectUrl="http://localhost:8081/login"
 							| response.sendRedirect(redirectUrl)							
-| DefaultLoginPageGeneratingFilter#doFilter 拦截登录路径"/login", 如果没有指定登录页面就会生成默认的登录页面
+	| DefaultLoginPageGeneratingFilter#doFilter 拦截登录路径"/login", 如果没有指定登录页面就会生成默认的登录页面
 	| generateLoginPageHtml()
 	| response.setContentType("text/html;charset=UTF-8")
 	| response.getWriter().write(loginPageHtml)
@@ -67,8 +67,8 @@
 *过程二：从登录页面重定向到目标接口*
 ---------------------
 
-| 输入用户名、密码登录	
-	| UsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter#doFilter
+	| 输入用户名、密码登录	
+		| UsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter#doFilter
 	| Authentication authResult = attemptAuthentication(request, response) 尝试认证
 		| authRequest = new UsernamePasswordAuthenticationToken(username, password)
 		| ProviderManager.authenticate(authRequest)
@@ -106,8 +106,9 @@
 		return auth;
 }
 FilterSecurityInterceptor是Spring Security过滤器链中的最后一个过滤器，负责来决定请求是否最终有权限来访问。在该过滤器方法调用中链中AbstractAccessDecisionManager#decide和WebExpressionVoter#vote是需要注意的两个方法，WebExpressionVoter是一种投票器，可以对访问的url进行投票，可以投"通过"，也可以投"拒绝"。 SecurityExpressionRoot#isAuthenticated()方法会返回最终的投票的结果。Spring Security默认所有的请求都需要登录认证，因我们访问"/helloworld"接口没有登录，所以投票器会投"拒绝"票(AccessDecisionVoter.ACCESS_DENIED)
+
 	public class AffirmativeBased extends AbstractAccessDecisionManager {
-	public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws AccessDeniedException {
+		public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws 		AccessDeniedException {
 		int deny = 0;
 
 		for (AccessDecisionVoter voter : getDecisionVoters()) {
@@ -141,7 +142,7 @@ FilterSecurityInterceptor是Spring Security过滤器链中的最后一个过滤�
 }
 ExceptionTranslationFilter是倒数第二个过滤器，它会捕获FilterSecurityInterceptor抛出的异常并对异常进行逻辑处理。如果访问拒绝(认证失败)就会重定向到登录地址"/login"
 
-public class ExceptionTranslationFilter extends GenericFilterBean {
+	public class ExceptionTranslationFilter extends GenericFilterBean {
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
 		try {
 			chain.doFilter(request, response);
@@ -158,8 +159,8 @@ public class ExceptionTranslationFilter extends GenericFilterBean {
 				sendStartAuthentication(request, response, chain, new InsufficientAuthenticationException(messages.getMessage("ExceptionTranslationFilter.insufficientAuthentication", "Full authentication is required to access this resource")));
 			}
 	}
-}
-public class DefaultRedirectStrategy implements RedirectStrategy {
+	}
+	public class DefaultRedirectStrategy implements RedirectStrategy {
 	public void sendRedirect(HttpServletRequest request, HttpServletResponse response,
 			String url) throws IOException {
 		String redirectUrl = calculateRedirectUrl(request.getContextPath(), url);
@@ -172,9 +173,10 @@ public class DefaultRedirectStrategy implements RedirectStrategy {
 
 		response.sendRedirect(redirectUrl);
 	}
-}
+	}
 当系统访问"/login"路径时会被默认的登录页面生成过滤器DefaultLoginPageGeneratingFilter所拦截，系统会判断自己有没有指定登录页面，如果没有指定系统就会生成一个默认的登录页面
-public class DefaultLoginPageGeneratingFilter extends GenericFilterBean {
+
+	public class DefaultLoginPageGeneratingFilter extends GenericFilterBean {
 	public static final String DEFAULT_LOGIN_PAGE_URL = "/login";
 	
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
@@ -201,7 +203,8 @@ public class DefaultLoginPageGeneratingFilter extends GenericFilterBean {
 ---------------------
 >用户在登录页面输入用户名和密码点击登录
 登录时被用户名密码认证过滤器UsernamePasswordAuthenticationFilter所拦截，去校验用户名和密码是否正确。检查用户名是在DaoAuthenticationProvider#retrieveUser(username, authentication) 方法中检查，检查密码是在DaoAuthenticationProvider#additionalAuthenticationChecks(user, authentication)中检查。如果用户名和密码都是正确的，则重定向到上次访问的路径上，即我们第一次访问的"http://localhost:8080/helloworld"路径上。
-public class DaoAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
+
+	public class DaoAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
 
 	protected final UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
 		prepareTimingAttackProtection();
@@ -246,8 +249,8 @@ public class DaoAuthenticationProvider extends AbstractUserDetailsAuthentication
 					"Bad credentials"));
 		}
 	}
-}
-public class InMemoryUserDetailsManager implements UserDetailsManager, UserDetailsPasswordService {
+	}
+	public class InMemoryUserDetailsManager implements UserDetailsManager, UserDetailsPasswordService {
 	public UserDetails loadUserByUsername(String username)
 			throws UsernameNotFoundException {
 		UserDetails user = users.get(username.toLowerCase());
@@ -264,6 +267,7 @@ public class InMemoryUserDetailsManager implements UserDetailsManager, UserDetai
 }		
 **四：Spring Security 默认的配置**
 ================================
+
 Spring Security中可以通过配置来配置一些参数，比如哪些路径需要认证，登录页面相关的配置(如登录的路径、登录成功时要跳转的路径、登录成功时的处理器、登录失败时要跳转的路径、登录失败时的处理器、登出的路径等)、在过滤器链中添加自己的过滤器(addFilterBefore)等，可以配置很多。如果没有显式配置Spring Security会提供一套默认的值，默认的配置大致如下配置：
 
 	@Configuration
@@ -298,20 +302,20 @@ Spring Security主要用于认证Authentication(登录)和授权Authorize(api是
 
 Spring Security使用到的过滤器：
 
-WebAsyncManagerIntegrationFilter
-SecurityContextPersistenceFilter
-HeaderWriterFilter
-CsrfFilter
-LogoutFilter
-BasicAuthenticationFilter
-UsernamePasswordAuthenticationFilter
-RememberMeAuthenticationFilter
-SocialAuthenticationFilter
-DefaultLoginPageGeneratingFilter
-DefaultLogoutPageGeneratingFilter
-RequestCacheAwareFilter
-SecurityContextHolderAwareRequestFilter
-SessionManagementFilter
-AnonymousAuthenticationFilter
-ExceptionTranslationFilter
-FilterSecurityInterceptor
+	WebAsyncManagerIntegrationFilter
+	SecurityContextPersistenceFilter
+	HeaderWriterFilter
+	CsrfFilter
+	LogoutFilter
+	BasicAuthenticationFilter
+	UsernamePasswordAuthenticationFilter
+	RememberMeAuthenticationFilter
+	SocialAuthenticationFilter
+	DefaultLoginPageGeneratingFilter
+	DefaultLogoutPageGeneratingFilter
+	RequestCacheAwareFilter
+	SecurityContextHolderAwareRequestFilter
+	SessionManagementFilter
+	AnonymousAuthenticationFilter
+	ExceptionTranslationFilter
+	FilterSecurityInterceptor
