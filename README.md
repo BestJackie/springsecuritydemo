@@ -1,7 +1,7 @@
 **一、最简单的spring security程序**
 =========================
 
-1、*引入spring-boot-starter-security依赖*
+*1、引入spring-boot-starter-security依赖*
 ------------------
 
 <dependency>
