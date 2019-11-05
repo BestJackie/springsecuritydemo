@@ -202,7 +202,7 @@ ExceptionTranslationFilter是倒数第二个过滤器，它会捕获FilterSecuri
 *过程二源码分析*
 ---------------------
 >用户在登录页面输入用户名和密码点击登录
-登录时被用户名密码认证过滤器UsernamePasswordAuthenticationFilter所拦截，去校验用户名和密码是否正确。检查用户名是在DaoAuthenticationProvider#retrieveUser(username, authentication) 方法中检查，检查密码是在DaoAuthenticationProvider#additionalAuthenticationChecks(user, authentication)中检查。如果用户名和密码都是正确的，则重定向到上次访问的路径上，即我们第一次访问的"http://localhost:8080/helloworld"路径上。
+登录时被用户名密码认证过滤器UsernamePasswordAuthenticationFilter所拦截，去校验用户名和密码是否正确。检查用户名是在DaoAuthenticationProvider#retrieveUser(username, authentication) 方法中检查，检查密码是在DaoAuthenticationProvider#additionalAuthenticationChecks(user, authentication)中检查。如果用户名和密码都是正确的，则重定向到上次访问的路径上，即我们第一次访问的"(http://localhost:8080/helloworld)"路径上。
 
 	public class DaoAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
 
