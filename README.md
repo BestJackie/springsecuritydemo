@@ -1,11 +1,17 @@
-一、最简单的spring security程序
-1、引入spring-boot-starter-security依赖
+**一、最简单的spring security程序**
+=========================
+
+1、*引入spring-boot-starter-security依赖*
+------------------
+
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-security</artifactId>
 </dependency>
-2、简单的测试controller
-@RestController
+*2、简单的测试controller*
+--------------------
+
+	@RestController
 public class ExampleController {
 
     @GetMapping("helloworld")
@@ -13,32 +19,33 @@ public class ExampleController {
         return Arrays.asList("Spring Security simple demo");
     }
 }
-3. 开始验证
+*3. 开始验证*
+------------------
+
 启动应用程序，控制台会打印一个生成的密码，如"Using generated security password: 4dd8384a-bc9e-4df0-9124-6686c9a813fa"，该密码每次启动应用程序都会改变
-访问 http://localhost:8081/helloworld
-系统会自动重定向到 http://localhost:8081/login （注意：这个登录页面不是自己写的，是Spring Security默认的登录页面）
+访问 (http://localhost:8081/helloworld)
+系统会自动重定向到 (http://localhost:8081/login) （注意：这个登录页面不是自己写的，是Spring Security默认的登录页面）
 输入用户名和密码，用户名为"user", 密码就是控制台生成的"4dd8384a-bc9e-4df0-9124-6686c9a813fa"
-系统会自动重定向到 http://localhost:8081/helloworld ，从而能够访问到接口
-三：示例分析
+系统会自动重定向到 (http://localhost:8081/helloworld) ，从而能够访问到接口
+**三：示例分析**
+=================================
 可以看到上面集成Spring Security非常简单(虽然这只是雏形)，示例是一个认证过程(也就是登录功能)，要学会Spring Security个人觉得非常有必要看一下源码是如何实现的，下面就简单的分析一下整个认证的过程, 我们可以根据控制台输出的日志来窥探整个认证执行的流程。
 
 下面是Spring Security认证的重要流程，自己可以打断点看一下程序是怎么执行的。
 
-过程一：从访问的目标接口重定向到登录页面
-
-http://localhost:8080/helloworld
-| AnonymousAuthenticationFilter#doFilter	检查安全上下文SecurityContextHolder中是否有认证信息，如果没有就设置为匿名认证令牌AnonymousAuthenticationToken
-| FilterSecurityInterceptor extends AbstractSecurityInterceptor#doFilter
-	| FilterSecurityInterceptor#invoke
-		| AbstractSecurityInterceptor#beforeInvocation
-			 | AffirmativeBased extends AbstractAccessDecisionManager#decide 访问决定管理器: 决定一个url是否有权限访问，具体决定操作由投票器决定
-				| WebExpressionVoter#vote() 投票器: 对url是否有权限访问进行投票，是否允许访问，允许则投"通过"，不允许则投"拒绝"
-					| ExpressionUtils#evaluateAsBoolean
-						|SpelExpression#getValue(org.springframework.expression.EvaluationContext, java.lang.Class<T>)
-							| PropertyOrFieldReference#getValueInternal()
-								| PropertyOrFieldReference#readProperty
-									| ReflectivePropertyAccessor.OptimalPropertyAccessor#read
-										| SecurityExpressionRoot#isAuthenticated() 投票的最终结果(拒绝)
+*过程一：从访问的目标接口重定向到[登录页面](http://localhost:8080/helloworld)*
+	| AnonymousAuthenticationFilter#doFilter	#检查安全上下文SecurityContextHolder中是否有认证信息，如果没有就设置为匿名认证令牌	AnonymousAuthenticationToken
+	| FilterSecurityInterceptor extends AbstractSecurityInterceptor#doFilter
+		| FilterSecurityInterceptor#invoke
+			| AbstractSecurityInterceptor#beforeInvocation
+			 	| AffirmativeBased extends AbstractAccessDecisionManager#decide #访问决定管理器: 决定一个url是否有权限访问，具体决定操作由投票器决定
+					| WebExpressionVoter#vote() 投票器: 对url是否有权限访问进行投票，是否允许访问，允许则投"通过"，不允许则投"拒绝"
+						| ExpressionUtils#evaluateAsBoolean
+							|SpelExpression#getValue(org.springframework.expression.EvaluationContext, java.lang.Class<T>)
+								| PropertyOrFieldReference#getValueInternal()
+									| PropertyOrFieldReference#readProperty
+										| ReflectivePropertyAccessor.OptimalPropertyAccessor#read
+											| SecurityExpressionRoot#isAuthenticated() 投票的最终结果(拒绝)
 			 	| 如果投票结果是拒绝则抛出访问拒绝异常new AccessDeniedException("Access is denied")
 | ExceptionTranslationFilter#doFilter 异常转换过滤器：用于捕获过滤器抛出的异常，并作出适当的处理
 	| catch(Exception ex)
@@ -53,10 +60,10 @@ http://localhost:8080/helloworld
 	| response.setContentType("text/html;charset=UTF-8")
 	| response.getWriter().write(loginPageHtml)
 
-过程二：从登录页面重定向到目标接口
+*过程二：从登录页面重定向到目标接口*
 
 | 输入用户名、密码登录	
-| UsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter#doFilter
+	| UsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter#doFilter
 	| Authentication authResult = attemptAuthentication(request, response) 尝试认证
 		| authRequest = new UsernamePasswordAuthenticationToken(username, password)
 		| ProviderManager.authenticate(authRequest)
@@ -76,9 +83,9 @@ http://localhost:8080/helloworld
 首先我们要知道Spring Security的基本原理就是用一堆过滤器来实现的，就是一个请求过来会经过很多个过滤器的拦截，如果所有过滤器都通过就能访问，如果不满足条件就抛异常，终止访问。
 
 过程一源码分析
-启动应用程序，访问接口http://localhost:8080/helloworld
+启动应用程序，[访问接口](http://localhost:8080/helloworld)
 ”/helloworld“ 路径首先会被AnonymousAuthenticationFilter进行拦截，该拦截器会检查认证上下文SecurityContextHolder中是否有认证信息，如果没有就给一个匿名认证信息
-public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) {
+	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) {
 
 		if (SecurityContextHolder.getContext().getAuthentication() == null) {
 			Authentication authentication = createAuthentication((HttpServletRequest) req);
@@ -87,14 +94,14 @@ public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
 		}
 }
 
-protected Authentication createAuthentication(HttpServletRequest request) {
+	protected Authentication createAuthentication(HttpServletRequest request) {
 		AnonymousAuthenticationToken auth = new AnonymousAuthenticationToken("12676a06-df4a-475b-bb7c-4d3ec4bd1c9b",
 				"anonymousUser", Arrays.asList("ROLE_ANONYMOUS"));
 		auth.setDetails(authenticationDetailsSource.buildDetails(request));
 		return auth;
 }
 FilterSecurityInterceptor是Spring Security过滤器链中的最后一个过滤器，负责来决定请求是否最终有权限来访问。在该过滤器方法调用中链中AbstractAccessDecisionManager#decide和WebExpressionVoter#vote是需要注意的两个方法，WebExpressionVoter是一种投票器，可以对访问的url进行投票，可以投"通过"，也可以投"拒绝"。 SecurityExpressionRoot#isAuthenticated()方法会返回最终的投票的结果。Spring Security默认所有的请求都需要登录认证，因我们访问"/helloworld"接口没有登录，所以投票器会投"拒绝"票(AccessDecisionVoter.ACCESS_DENIED)
-public class AffirmativeBased extends AbstractAccessDecisionManager {
+	public class AffirmativeBased extends AbstractAccessDecisionManager {
 	public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws AccessDeniedException {
 		int deny = 0;
 
