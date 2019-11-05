@@ -28,18 +28,21 @@
 系统会自动重定向到 (http://localhost:8081/login) （注意：这个登录页面不是自己写的，是Spring Security默认的登录页面）
 输入用户名和密码，用户名为"user", 密码就是控制台生成的"4dd8384a-bc9e-4df0-9124-6686c9a813fa"
 系统会自动重定向到 (http://localhost:8081/helloworld) ，从而能够访问到接口
+
 **三：示例分析**
 =================================
+
 可以看到上面集成Spring Security非常简单(虽然这只是雏形)，示例是一个认证过程(也就是登录功能)，要学会Spring Security个人觉得非常有必要看一下源码是如何实现的，下面就简单的分析一下整个认证的过程, 我们可以根据控制台输出的日志来窥探整个认证执行的流程。
 
 下面是Spring Security认证的重要流程，自己可以打断点看一下程序是怎么执行的。
 
 *过程一：从访问的目标接口重定向到[登录页面](http://localhost:8080/helloworld)*
-	| AnonymousAuthenticationFilter#doFilter	#检查安全上下文SecurityContextHolder中是否有认证信息，如果没有就设置为匿名认证令牌	AnonymousAuthenticationToken
+----------------------
+	| AnonymousAuthenticationFilter#doFilter	检查安全上下文SecurityContextHolder中是否有认证信息，如果没有就设置为匿名认证令牌	AnonymousAuthenticationToken
 	| FilterSecurityInterceptor extends AbstractSecurityInterceptor#doFilter
 		| FilterSecurityInterceptor#invoke
 			| AbstractSecurityInterceptor#beforeInvocation
-			 	| AffirmativeBased extends AbstractAccessDecisionManager#decide #访问决定管理器: 决定一个url是否有权限访问，具体决定操作由投票器决定
+			 	| AffirmativeBased extends AbstractAccessDecisionManager#decide 访问决定管理器: 决定一个url是否有权限访问，具体决定操作由投票器决定
 					| WebExpressionVoter#vote() 投票器: 对url是否有权限访问进行投票，是否允许访问，允许则投"通过"，不允许则投"拒绝"
 						| ExpressionUtils#evaluateAsBoolean
 							|SpelExpression#getValue(org.springframework.expression.EvaluationContext, java.lang.Class<T>)
@@ -62,6 +65,7 @@
 	| response.getWriter().write(loginPageHtml)
 
 *过程二：从登录页面重定向到目标接口*
+---------------------
 
 | 输入用户名、密码登录	
 	| UsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter#doFilter
@@ -193,8 +197,9 @@ public class DefaultLoginPageGeneratingFilter extends GenericFilterBean {
 	}
 }	
 
-过程二源码分析
-用户在登录页面输入用户名和密码点击登录
+*过程二源码分析*
+---------------------
+>用户在登录页面输入用户名和密码点击登录
 登录时被用户名密码认证过滤器UsernamePasswordAuthenticationFilter所拦截，去校验用户名和密码是否正确。检查用户名是在DaoAuthenticationProvider#retrieveUser(username, authentication) 方法中检查，检查密码是在DaoAuthenticationProvider#additionalAuthenticationChecks(user, authentication)中检查。如果用户名和密码都是正确的，则重定向到上次访问的路径上，即我们第一次访问的"http://localhost:8080/helloworld"路径上。
 public class DaoAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
 
@@ -257,35 +262,38 @@ public class InMemoryUserDetailsManager implements UserDetailsManager, UserDetai
 				user.isAccountNonLocked(), user.getAuthorities());
 	}
 }		
-四：Spring Security 默认的配置
+**四：Spring Security 默认的配置**
+================================
 Spring Security中可以通过配置来配置一些参数，比如哪些路径需要认证，登录页面相关的配置(如登录的路径、登录成功时要跳转的路径、登录成功时的处理器、登录失败时要跳转的路径、登录失败时的处理器、登出的路径等)、在过滤器链中添加自己的过滤器(addFilterBefore)等，可以配置很多。如果没有显式配置Spring Security会提供一套默认的值，默认的配置大致如下配置：
 
-@Configuration
-@EnableWebSecurity
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+	@Configuration
+	@EnableWebSecurity
+	public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-                // 配置需要认证的请求
-                .authorizeRequests()
-                    .anyRequest()
-                    .authenticated()
-                    .and()
-                // 登录表单相关配置
-                .formLogin()
-                    .usernameParameter("username")
-                    .passwordParameter("password")
-                    .failureUrl("/login?error")
-                    .permitAll()
-                    .and()
-                // 登出相关配置
-                .logout()
-                    .permitAll();
+   	 @Override
+    	protected void configure(HttpSecurity http) throws Exception {
+       	 http.csrf().disable()
+                	// 配置需要认证的请求
+                	.authorizeRequests()
+                    	.anyRequest()
+                    	.authenticated()
+                    	.and()
+               	 	// 登录表单相关配置
+                	.formLogin()
+                    	.usernameParameter("username")
+                    	.passwordParameter("password")
+                    	.failureUrl("/login?error")
+                    	.permitAll()
+                    	.and()
+                	// 登出相关配置
+                	.logout()
+                    	.permitAll();
 
-    }
-}
-五: Spring Security过滤器链
+   	 }
+	}
+**五: Spring Security过滤器链**
+=============================
+
 Spring Security主要用于认证Authentication(登录)和授权Authorize(api是否有权访问)，实现这些功能的基本原理就是过滤器链，即当访问一个url时会被过滤器链中的每个过滤器所拦截，如果每个过滤器都没有抛异常则表示当前用户允许访问该url，则重定向到用户需要访问的url上，如果有一个过滤器抛出异常了则表示当前用户没有权限访问该url，此时可以报错。
 
 Spring Security使用到的过滤器：
